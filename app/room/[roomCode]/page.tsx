@@ -440,7 +440,7 @@ export default function RoomPage() {
         </div>
       )}
 
-  <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-x-4 lg:gap-y-0">
+  <div className="flex flex-col gap-0 lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-x-4 lg:gap-y-0">
   <div className="order-1 space-y-0 lg:col-start-1 lg:row-start-1">
           <RoomHeader
             room={room}
@@ -498,7 +498,7 @@ export default function RoomPage() {
           />
         </div>
 
-        <div className="order-3 lg:col-start-1 lg:row-start-2">
+  <div className="order-3 lg:col-start-1 lg:row-start-2">
           <PlayerList
             players={room.players}
             currentPlayerId={playerId}

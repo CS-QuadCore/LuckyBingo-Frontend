@@ -31,6 +31,7 @@ import RoomHeader from "@/components/room/RoomHeader";
 import BingoCard from "@/components/room/BingoCard";
 import PlayerList from "@/components/room/PlayerList";
 import CalledNumbers from "@/components/room/CalledNumbers";
+import { Button } from "@/components/ui/button";
 import backgroundScene from "@/components/assets/background.svg";
 
 export default function RoomPage() {
@@ -439,14 +440,14 @@ export default function RoomPage() {
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <div className="space-y-4">
+  <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-x-4 lg:gap-y-0">
+  <div className="order-1 space-y-0 lg:col-start-1 lg:row-start-1">
           <RoomHeader
             room={room}
             isHost={isHost}
             actionLoading={actionLoading}
+            showCallNumber={false}
             onCallNumber={handleCallNumber}
-            onClaimBingo={handleClaimBingo}
             onLeave={() => setShowLeaveModal(true)}
             onEndSession={async () => setShowEndSessionModal(true)}
             onRestartSession={async () => {
@@ -456,17 +457,32 @@ export default function RoomPage() {
             onRefreshCards={handleChangeCard}
             onWinPatternChange={handleWinPatternChange}
           />
-
-          <PlayerList
-            players={room.players}
-            currentPlayerId={playerId}
-            activeQuickChats={activeQuickChats}
-            onSendQuickChat={handleSendQuickChat}
-          />
         </div>
 
-        <div className="space-y-3 lg:px-2">
-          <CalledNumbers numbers={room.called_numbers} />
+        <div className="order-2 space-y-3 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:px-2">
+          <CalledNumbers
+            numbers={room.called_numbers}
+            action={
+              <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+                {isHost ? (
+                  <Button
+                    onClick={handleCallNumber}
+                    disabled={actionLoading || room.status === "finished"}
+                    className="h-8 sm:h-9 rounded-lg bg-emerald-500 px-3 text-[11px] sm:text-xs font-semibold text-white shadow-md hover:bg-emerald-600"
+                  >
+                    Call Number
+                  </Button>
+                ) : null}
+                <Button
+                  onClick={handleClaimBingo}
+                  disabled={actionLoading || room.status === "finished"}
+                  className="h-8 sm:h-9 rounded-lg bg-yellow-400 px-3 text-[11px] sm:text-xs font-semibold text-yellow-900 hover:bg-yellow-500"
+                >
+                  ⭐ Claim Bingo
+                </Button>
+              </div>
+            }
+          />
           <BingoCard
             card={card}
             calledNumbers={room.called_numbers}
@@ -479,6 +495,15 @@ export default function RoomPage() {
                 prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key]
               );
             }}
+          />
+        </div>
+
+        <div className="order-3 lg:col-start-1 lg:row-start-2">
+          <PlayerList
+            players={room.players}
+            currentPlayerId={playerId}
+            activeQuickChats={activeQuickChats}
+            onSendQuickChat={handleSendQuickChat}
           />
         </div>
       </div>

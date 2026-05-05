@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ballB from "@/components/assets/B_ball.svg";
 import ballI from "@/components/assets/I_ball.svg";
@@ -8,6 +9,7 @@ import ballO from "@/components/assets/O_ball.svg";
 
 type CalledNumbersProps = {
   numbers: number[];
+  action?: ReactNode;
 };
 
 function getBingoLetter(num: number) {
@@ -26,29 +28,30 @@ const BALL_ASSETS: Record<string, typeof ballB> = {
   O: ballO,
 };
 
-export default function CalledNumbers({ numbers }: CalledNumbersProps) {
+export default function CalledNumbers({ numbers, action }: CalledNumbersProps) {
   const recentNumbers = [...numbers].reverse();
   const [currentNumber, ...previousNumbers] = recentNumbers;
 
   return (
-    <Card className=" bg-transparent shadow-none">
-  <CardHeader >
-        <CardTitle className="text-lg font-semibold text-slate-900">
+    <Card className="bg-transparent shadow-none">
+      <CardHeader className="flex flex-row items-center justify-between gap-2 px-3 pb-2 sm:px-6">
+        <CardTitle className="text-base font-semibold text-slate-900 sm:text-lg">
           Called Numbers
         </CardTitle>
+        {action ? <div className="shrink-0">{action}</div> : null}
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6">
         {recentNumbers.length ? (
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {currentNumber !== undefined ? (() => {
               const letter = getBingoLetter(currentNumber);
               const asset = BALL_ASSETS[letter];
               return (
                 <div className="flex items-center gap-2 rounded-2xl px-1 py-1">
-                  <div className="relative h-16 w-16">
+                  <div className="relative h-12 w-12 sm:h-16 sm:w-16">
                     <Image src={asset} alt={`${letter} ball`} fill className="object-contain" />
                     <div className="absolute inset-0 flex items-center justify-center font-bold text-slate-900 top-2">
-                      <span className="text-lg">{currentNumber}</span>
+                      <span className="text-sm sm:text-lg">{currentNumber}</span>
                     </div>
                   </div>
     
@@ -61,7 +64,7 @@ export default function CalledNumbers({ numbers }: CalledNumbersProps) {
                 {previousNumbers.map((num, index) => {
                   const letter = getBingoLetter(num);
                   return (
-                    <div key={`${num}-${index}`} className="relative h-10 w-10">
+                    <div key={`${num}-${index}`} className="relative h-8 w-8 sm:h-10 sm:w-10">
                       <Image
                         src={BALL_ASSETS[letter]}
                         alt={`${letter} ball`}
@@ -69,7 +72,7 @@ export default function CalledNumbers({ numbers }: CalledNumbersProps) {
                         className="object-contain"
                       />
                       <div className="absolute inset-0 flex items-center justify-center font-bold text-slate-90 top-1">
-                        <span className="text-xs">{num}</span>
+                        <span className="text-[10px] sm:text-xs">{num}</span>
                       </div>
                     </div>
                   );

@@ -40,10 +40,10 @@ export default function PlayerList({
 
   return (
     <Card className="rounded-2xl overflow-visible">
-      <CardHeader>
+      <CardHeader className="px-4 sm:px-6">
         <CardTitle>Players</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 px-4 sm:px-6">
         {players.map((player) => {
           const style = getPlayerStyle(player);
           const isCurrentPlayer = player.player_id === currentPlayerId;
@@ -54,7 +54,7 @@ export default function PlayerList({
               key={player.player_id}
               className={`rounded-xl border px-4 py-3 ${style.container}`}
             >
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold">
                     {player.player_name}

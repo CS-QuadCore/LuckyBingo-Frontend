@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import Image from "next/image";
 import type { BingoCell } from "@/lib/types";
 import type { WinPattern } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import bingoCardAsset from "@/components/assets/bingo_card.svg";
 import markAsset from "@/components/assets/mark.svg";
@@ -172,7 +172,7 @@ export default function BingoCard({
 
   return (
     <Card className="rounded-2xl border-none bg-transparent shadow-none">
-      <CardContent>
+      <CardContent className="p-3 sm:p-6">
         <div className="relative mx-auto w-full max-w-xl">
           <Image
             src={bingoCardAsset}
@@ -180,7 +180,7 @@ export default function BingoCard({
             className="h-auto w-full"
             priority
           />
-          <div className="absolute inset-x-[16%] bottom-[11%] top-[17%] left-21.5">
+          <div className="absolute inset-x-[14%] bottom-[12%] top-[17%] sm:inset-x-[16%] sm:bottom-[11%] sm:top-[17%] sm:left-21.5 left-13 right-14">
             <div className="sr-only" aria-hidden>
               {BINGO_HEADERS.join(" ")}
             </div>
@@ -201,7 +201,7 @@ export default function BingoCard({
                       onClick={() => onCellClick(rowIndex, colIndex, cell)}
                       disabled={!isClickable}
                       className={cn(
-                        "relative flex h-full w-full aspect-square items-center justify-center rounded-[18%] p-0 text-center text-4xl font-semibold leading-none text-slate-700 transition",
+                        "relative flex aspect-square h-full w-full items-center justify-center rounded-[18%] p-0 text-center text-lg font-semibold leading-none text-slate-700 transition sm:text-4xl md:text-4xl lg:text-4xl",
                         isClickable && !isMarked && "hover:scale-[1.02]",
                         !isClickable && "cursor-not-allowed opacity-60"
                       )}

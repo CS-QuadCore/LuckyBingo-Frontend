@@ -41,7 +41,7 @@ export default function QuickChatMenu({ onSendQuickChat }: QuickChatMenuProps) {
         ...
       </Button>
       {showQuickChatMenu ? (
-        <Card className="absolute right-0 top-12 z-20 min-w-52 shadow-lg">
+        <Card className="absolute right-0 left-0 sm:left-auto top-12 z-20 w-60 max-w-[90vw] sm:w-64 shadow-lg">
           <CardContent className="space-y-2 p-2">
             <div className="flex items-center gap-2">
               <Input

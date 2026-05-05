@@ -16,7 +16,7 @@ type Props = {
 export default function NoMoreNumbersModal({ open, onClose }: Props) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="text-center">
+      <DialogContent className="w-[92vw] max-w-sm text-center sm:p-8">
         <DialogHeader>
           <DialogTitle className="text-xl text-emerald-600">
             ✅ No More Numbers
@@ -25,7 +25,9 @@ export default function NoMoreNumbersModal({ open, onClose }: Props) {
         <p className="text-muted-foreground">
           Please check your cards to see who got bingo.
         </p>
-        <Button onClick={onClose}>Got it</Button>
+        <Button onClick={onClose} className="w-full sm:w-auto">
+          Got it
+        </Button>
       </DialogContent>
     </Dialog>
   );

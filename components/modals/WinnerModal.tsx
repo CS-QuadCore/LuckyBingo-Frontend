@@ -24,7 +24,7 @@ export default function WinnerModal({
 }: Props) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="text-center">
+      <DialogContent className="w-[92vw] max-w-md text-center sm:p-8">
         <DialogHeader>
           <DialogTitle className="text-2xl">🎉 Bingo Winner!</DialogTitle>
           <DialogDescription className="sr-only">
@@ -36,14 +36,15 @@ export default function WinnerModal({
           <span className="font-bold">{winnerName}</span> got BINGO!
         </p>
 
-        <div className="mt-4 flex flex-wrap justify-center gap-3">
-          <Button variant="outline" onClick={onLeave}>
+        <div className="mt-4 flex flex-col sm:flex-row flex-wrap justify-center gap-3">
+          <Button variant="outline" onClick={onLeave} className="w-full sm:w-auto">
             Leave
           </Button>
           <Button
             onClick={onPlayAgain}
             disabled={!canPlayAgain || playAgainLoading}
             title={canPlayAgain ? "Start a new round" : "Only the host can start a new round"}
+            className="w-full sm:w-auto"
           >
             Play Again
           </Button>

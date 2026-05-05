@@ -25,7 +25,7 @@ export default function QuickPlayBanner({ loading, onQuickPlay }: QuickPlayBanne
           type="button"
           onClick={onQuickPlay}
           disabled={loading}
-          className="rounded-xl border border-orange-200 bg-white px-6 py-2.5 text-sm font-semibold text-orange-600 hover:bg-orange-500 hover:text-white hover:border-orange-500 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap shadow-sm"
+          className="w-full sm:w-auto rounded-xl border border-orange-200 bg-white px-6 py-2.5 text-sm font-semibold text-orange-600 hover:bg-orange-500 hover:text-white hover:border-orange-500 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap shadow-sm"
         >
           {loading ? "Joining…" : "Find a room →"}
         </button>

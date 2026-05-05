@@ -41,9 +41,9 @@ export default function QuickChatMenu({ onSendQuickChat }: QuickChatMenuProps) {
         ...
       </Button>
       {showQuickChatMenu ? (
-        <Card className="absolute right-0 top-12 z-20 min-w-52 shadow-lg">
-          <CardContent className="space-y-2 p-2">
-            <div className="flex items-center gap-2">
+        <Card className="fixed bottom-4 left-1/2 z-50 w-[90vw] max-w-xs -translate-x-1/2 rounded-2xl border border-white/70 bg-white/95 shadow-2xl backdrop-blur sm:absolute sm:bottom-auto sm:left-auto sm:right-0 sm:top-12 sm:w-64 sm:max-w-none sm:translate-x-0">
+          <CardContent className="max-h-[45vh] space-y-2 overflow-auto p-2 sm:max-h-[60vh]">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Input
                 type="text"
                 value={customQuickChat}
@@ -62,6 +62,7 @@ export default function QuickChatMenu({ onSendQuickChat }: QuickChatMenuProps) {
                 variant="outline"
                 size="xs"
                 onClick={() => sendQuickChat(customQuickChat)}
+                className="w-full sm:w-auto"
               >
                 Send
               </Button>
@@ -72,7 +73,7 @@ export default function QuickChatMenu({ onSendQuickChat }: QuickChatMenuProps) {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="w-full justify-start text-xs"
+                className="w-full justify-start rounded-lg bg-white/70 px-2 py-1 text-xs hover:bg-white"
                 onClick={() => {
                   sendQuickChat(message);
                 }}

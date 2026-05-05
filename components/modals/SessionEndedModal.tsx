@@ -12,7 +12,7 @@ type Props = {
 export default function SessionEndedModal({ open, onGoHome, onCancel }: Props) {
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onCancel(); }}>
-      <DialogContent className="text-center">
+      <DialogContent className="w-[92vw] max-w-md text-center sm:p-8">
         <DialogHeader>
           <DialogTitle className="text-2xl">Session Ended</DialogTitle>
         </DialogHeader>
@@ -21,11 +21,11 @@ export default function SessionEndedModal({ open, onGoHome, onCancel }: Props) {
           The host has ended the session. Do you want to go back to home?
         </p>
 
-        <div className="flex justify-center gap-3 mt-4">
-          <Button variant="outline" onClick={onCancel}>
+        <div className="mt-4 flex flex-col-reverse sm:flex-row justify-center gap-3">
+          <Button variant="outline" onClick={onCancel} className="w-full sm:w-auto">
             Stay
           </Button>
-          <Button onClick={onGoHome}>
+          <Button onClick={onGoHome} className="w-full sm:w-auto">
             Yes, go home
           </Button>
         </div>

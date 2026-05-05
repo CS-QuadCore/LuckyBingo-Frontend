@@ -39,11 +39,12 @@ export default function PlayerList({
   }
 
   return (
-    <Card className="rounded-2xl overflow-visible">
-      <CardHeader>
-        <CardTitle>Players</CardTitle>
+    <Card className="overflow-visible rounded-3xl border border-white/60 bg-white/70 shadow-xl backdrop-blur-xl">
+      <CardHeader className="px-4 pb-2 sm:px-6">
+        <CardTitle className="text-lg font-semibold text-slate-900">Players</CardTitle>
+        <p className="text-xs text-slate-500">Live lobby status</p>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 px-4 pb-4 sm:px-6">
         {players.map((player) => {
           const style = getPlayerStyle(player);
           const isCurrentPlayer = player.player_id === currentPlayerId;
@@ -52,25 +53,28 @@ export default function PlayerList({
           return (
             <div
               key={player.player_id}
-              className={`rounded-xl border px-4 py-3 ${style.container}`}
+              className={`rounded-2xl border px-4 py-3 shadow-sm transition hover:shadow-md ${style.container}`}
             >
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold">
+              <div className="flex items-start justify-between gap-2 sm:items-center">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="truncate text-sm font-semibold text-slate-900">
                     {player.player_name}
                   </div>
                   <div className={`text-xs ${style.meta}`}>
                     {player.is_host ? "Host" : "Player"} · {player.connected ? "Connected" : "Disconnected"}
                   </div>
                   {quickChat ? (
-                    <div className="mt-1 inline-block rounded-md border border-current/20 bg-white/65 px-2 py-1 text-xs font-medium">
-                      {quickChat}
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
+                      <span className="text-slate-500">💬</span>
+                      <span className="truncate">{quickChat}</span>
                     </div>
                   ) : null}
                 </div>
 
                 {isCurrentPlayer ? (
-                  <QuickChatMenu onSendQuickChat={onSendQuickChat} />
+                  <div className="self-start sm:self-center">
+                    <QuickChatMenu onSendQuickChat={onSendQuickChat} />
+                  </div>
                 ) : null}
               </div>
             </div>

@@ -14,7 +14,7 @@ export default function NameSetupCard({
   onSubmit,
 }: NameSetupCardProps) {
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+  <div className="rounded-2xl border border-stone-200 bg-white p-4 sm:p-6 shadow-sm">
       <p className="text-xs font-semibold uppercase tracking-widest text-stone-400 mb-1">
         Before you start
       </p>
@@ -31,7 +31,7 @@ export default function NameSetupCard({
         />
         <button
           type="submit"
-          className="rounded-xl bg-stone-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-stone-700 active:scale-95 transition-all"
+          className="w-full sm:w-auto rounded-xl bg-stone-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-stone-700 active:scale-95 transition-all"
         >
           Continue →
         </button>

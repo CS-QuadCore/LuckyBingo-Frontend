@@ -24,18 +24,18 @@ export default function EndSessionModal({
 }: Props) {
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onCancel(); }}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="w-[92vw] max-w-sm sm:max-w-md">
         <DialogHeader>
           <DialogTitle>End Session?</DialogTitle>
           <DialogDescription>
             This will finish the current game for everyone in the room.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" onClick={onCancel} disabled={loading}>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-3">
+          <Button variant="outline" onClick={onCancel} disabled={loading} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm} disabled={loading}>
+          <Button variant="destructive" onClick={onConfirm} disabled={loading} className="w-full sm:w-auto">
             {loading ? "Ending..." : "End Session"}
           </Button>
         </div>

@@ -26,18 +26,18 @@ export default function RestartSessionModal({
     <Dialog open={open} onOpenChange={(v) => {
       if (!v) onCancel();
     }}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="w-[92vw] max-w-sm sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Start a new round?</DialogTitle>
           <DialogDescription>
             This will reset the board and start a fresh game for everyone.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" onClick={onCancel} disabled={loading}>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-3">
+          <Button variant="outline" onClick={onCancel} disabled={loading} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button onClick={onConfirm} disabled={loading}>
+          <Button onClick={onConfirm} disabled={loading} className="w-full sm:w-auto">
             {loading ? "Restarting..." : "Restart"}
           </Button>
         </div>

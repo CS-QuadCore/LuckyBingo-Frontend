@@ -16,7 +16,7 @@ type Props = {
 export default function InvalidBingoModal({ open, onClose }: Props) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="text-center">
+      <DialogContent className="w-[92vw] max-w-sm text-center sm:p-8">
         <DialogHeader>
           <DialogTitle className="text-xl text-destructive">
             ❌ Invalid Bingo
@@ -27,7 +27,9 @@ export default function InvalidBingoModal({ open, onClose }: Props) {
           Your card does not form a valid bingo yet.
         </p>
 
-        <Button onClick={onClose}>Try Again</Button>
+        <Button onClick={onClose} className="w-full sm:w-auto">
+          Try Again
+        </Button>
       </DialogContent>
     </Dialog>
   );

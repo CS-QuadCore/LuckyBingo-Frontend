@@ -121,7 +121,7 @@ export default function RoomHeader({
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    "rounded-full px-3 text-[11px] sm:text-xs",
+                    "rounded-full px-3 text-[11px] sm:text-xs underline",
                     collapsed ? "h-8" : "hidden sm:inline-flex h-8"
                   )}
                 >
@@ -167,7 +167,7 @@ export default function RoomHeader({
               )}
             </div>
 
-            <div className="flex flex-col gap-2 pt-2">
+            <div className="flex flex-col gap-2 pt-4">
               {isHost && showCallNumber ? (
                 <Button
                   onClick={onCallNumber}
@@ -180,7 +180,29 @@ export default function RoomHeader({
 
               {/* HOST SECONDARY */}
               {isHost && (
+                
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Button
+                    onClick={onRestartSession}
+                    disabled={actionLoading || room.status !== "finished"}
+                    className="h-8 sm:h-10 rounded-lg bg-yellow-400 text-yellow-900 text-xs sm:text-sm hover:bg-yellow-500"
+                  >
+                    Play Again
+                  </Button>
+
+                  <Button
+                  variant="outline"
+                  onClick={onRefreshCards}
+                  disabled={
+                    actionLoading ||
+                    room.status !== "waiting" ||
+                    room.called_numbers.length > 0
+                  }
+                  className="h-8 sm:h-10 rounded-lg text-xs sm:text-sm"
+                  >
+                    Change Card
+                  </Button>
+
                   <Button
                     variant="destructive"
                     onClick={onEndSession}
@@ -191,38 +213,14 @@ export default function RoomHeader({
                   </Button>
 
                   <Button
-                    onClick={onRestartSession}
-                    disabled={actionLoading || room.status !== "finished"}
-                    className="h-8 sm:h-10 rounded-lg bg-yellow-400 text-yellow-900 text-xs sm:text-sm hover:bg-yellow-500"
-                  >
-                    Play Again
-                  </Button>
+                      variant="destructive"
+                      onClick={onLeave}
+                      className="w-full h-8 sm:h-10 rounded-lg text-xs sm:text-sm"
+                    >
+                      Leave Room
+                    </Button>
                 </div>
               )}
-
-              {/* PLAYER ACTIONS */}
-              <div className="flex flex-col gap-2">
-                <Button
-                  variant="outline"
-                  onClick={onRefreshCards}
-                  disabled={
-                    actionLoading ||
-                    room.status !== "waiting" ||
-                    room.called_numbers.length > 0
-                  }
-                  className="h-8 sm:h-10 rounded-lg text-xs sm:text-sm"
-                >
-                  Change Card
-                </Button>
-
-                <Button
-                  variant="secondary"
-                  onClick={onLeave}
-                  className="w-full h-8 sm:h-10 rounded-lg text-xs sm:text-sm"
-                >
-                  Leave Room
-                </Button>
-              </div>
             </div>
           </CollapsibleContent>
         </CardContent>

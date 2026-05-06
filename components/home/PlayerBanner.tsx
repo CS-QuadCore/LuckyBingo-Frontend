@@ -16,32 +16,32 @@ export default function PlayerBanner({
   onReset,
 }: PlayerBannerProps) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-3xl border border-white/60 bg-white/75 backdrop-blur-xl px-5 py-3.5 shadow-xl">
+  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur-sm px-5 py-3.5">
       {/* Avatar + name */}
       <div className="flex items-center gap-2.5">
-        <div className="w-9 h-9 rounded-full bg-linear-to-br from-amber-400 to-yellow-500 flex items-center justify-center text-slate-900 font-black text-sm shadow-md shrink-0">
+  <div className="w-8 h-8 rounded-full bg-linear-to-br from-amber-400 to-yellow-500 flex items-center justify-center text-slate-900 font-black text-sm shadow-md shrink-0">
           {playerName.charAt(0).toUpperCase()}
         </div>
-        <span className="text-sm text-slate-600">
+        <span className="text-sm text-slate-400">
           Playing as{" "}
-          <span className="font-bold text-slate-900">{playerName}</span>
+          <span className="font-bold text-white">{playerName}</span>
         </span>
       </div>
 
       {/* Actions */}
-      <div className="flex flex-row gap-2 w-full sm:w-auto">
+      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
         {hasPreviousRoom && (
           <button
             onClick={onReEnter}
             disabled={reEnterLoading}
-            className="flex-1 sm:flex-none rounded-xl border border-emerald-300 bg-emerald-100/80 px-4 py-2 text-xs font-semibold text-emerald-900 hover:bg-emerald-200/80 active:scale-95 transition-all disabled:opacity-50"
+            className="w-full sm:w-auto rounded-xl border border-indigo-500/50 bg-indigo-500/15 px-4 py-2 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/25 active:scale-95 transition-all disabled:opacity-50"
           >
             {reEnterLoading ? "Re-entering…" : "↩ Re-enter Last Room"}
           </button>
         )}
         <button
           onClick={onReset}
-          className="flex-1 sm:flex-none rounded-xl border border-white/70 bg-white/80 px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:border-white active:scale-95 transition-all"
+          className="w-full sm:w-auto rounded-xl border border-white/10 bg-slate-700/40 px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white hover:border-white/20 active:scale-95 transition-all"
         >
           Change Name
         </button>

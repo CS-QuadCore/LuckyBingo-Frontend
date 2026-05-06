@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
@@ -8,7 +9,16 @@ import NameSetupCard from "@/components/home/NameSetupCard";
 import PlayerBanner from "@/components/home/PlayerBanner";
 import CreateRoomForm from "@/components/home/CreateRoomForm";
 import JoinRoomForm from "@/components/home/JoinRoomForm";
-import QuickPlayBanner from "@/components/home/QuickPlayBanner";
+import QuickPlayModal from "@/components/modals/QuickPlayModal";
+import backgroundScene from "@/components/assets/background.svg";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 import { createRoom, getPublicRooms, joinRoom, reEnterRoom } from "@/lib/api";
 
@@ -23,6 +33,7 @@ export default function HomePage() {
   const [joinLoading, setJoinLoading] = useState(false);
   const [reEnterLoading, setReEnterLoading] = useState(false);
   const [hasPreviousRoom, setHasPreviousRoom] = useState(false);
+  const [quickPlayModalOpen, setQuickPlayModalOpen] = useState(false);
 
   useEffect(() => {
     let playerId = localStorage.getItem("player_id");
@@ -101,13 +112,17 @@ export default function HomePage() {
     setError("");
     try {
       const rooms = await getPublicRooms();
-      if (rooms.length === 0) { setError("No active public lobbies right now."); return; }
+      if (rooms.length === 0) {
+        setQuickPlayModalOpen(true);
+        return;
+      }
       const randomRoom = rooms[Math.floor(Math.random() * rooms.length)];
       await handleJoinRoom(randomRoom.room_code);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to quick play");
     }
   }
+
 
   async function handleReEnter() {
     setError("");
@@ -127,21 +142,16 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FAF8F5] px-5 pb-16">
-      {/* Top accent bar */}
-      <div className="h-1 w-full bg-gradient-to-r from-orange-400 via-orange-500 to-amber-400 fixed top-0 left-0 z-50" />
+    <main className="relative min-h-screen overflow-hidden bg-sky-100 px-4 py-6 sm:px-6">
+      <Image
+        src={backgroundScene}
+        alt="LuckyBingo background"
+        fill
+        priority
+        className="object-cover"
+      />
 
-      {/* Nav */}
-      <nav className="flex items-center justify-between pt-6 pb-2 max-w-2xl mx-auto">
-        <span className="font-display font-black text-lg text-stone-900 tracking-tight">
-          Bingo<span className="text-orange-500">.</span>
-        </span>
-        <span className="text-xs text-stone-400 font-medium">
-          Real-time · Multiplayer
-        </span>
-      </nav>
-
-      <div className="mx-auto max-w-2xl space-y-4">
+      <div className="relative z-10 mx-auto max-w-5xl space-y-4">
         <HomeHero />
 
         {/* NAME SETUP */}
@@ -151,16 +161,6 @@ export default function HomePage() {
             onChange={setDraftName}
             onSubmit={handleSaveName}
           />
-        )}
-
-        {/* ERROR */}
-        {error && (
-          <div className="flex items-center gap-2.5 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
-            <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-5.75a.75.75 0 001.5 0V8a.75.75 0 00-1.5 0v4.25zm.75 2.5a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
-            </svg>
-            {error}
-          </div>
         )}
 
         {/* MAIN CONTENT */}
@@ -174,19 +174,49 @@ export default function HomePage() {
               onReset={handleClearLocalStorage}
             />
 
+            <div className="rounded-3xl border border-white/60 bg-white/80 p-5 shadow-xl backdrop-blur-xl">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center text-yellow-900 text-sm font-black shadow shadow-yellow-200 shrink-0">
+                    ↯
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-900 text-sm">Quick Play</div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      Instantly drop into a random public room.
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleQuickPlay}
+                  disabled={joinLoading}
+                  className="w-full sm:w-auto rounded-xl border border-yellow-300 bg-yellow-200 px-6 py-2.5 text-sm font-semibold text-yellow-900 hover:bg-yellow-300 hover:border-yellow-400 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap shadow-sm"
+                >
+                  {joinLoading ? "Joining…" : "Find a room →"}
+                </button>
+              </div>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <CreateRoomForm onSubmit={handleCreateRoom} loading={createLoading} />
               <JoinRoomForm onSubmit={handleJoinRoom} loading={joinLoading} />
             </div>
 
-            <QuickPlayBanner loading={joinLoading} onQuickPlay={handleQuickPlay} />
+            
           </>
         )}
 
-        <p className="text-center text-xs text-stone-300 pt-6">
-          LuckyBingo · Built for classrooms, events &amp; parties
+        <p className="text-center text-xs pt-6 font-light text-slate-500">
+          © QuadCore 2026
         </p>
       </div>
+
+      <QuickPlayModal
+        open={quickPlayModalOpen}
+        onClose={() => setQuickPlayModalOpen(false)}
+      />
     </main>
   );
 }

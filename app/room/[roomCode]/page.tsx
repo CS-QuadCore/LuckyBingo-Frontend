@@ -450,8 +450,8 @@ export default function RoomPage() {
         </div>
       )}
 
-  <div className="flex flex-col gap-0 lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-x-4 lg:gap-y-0">
-  <div className="order-1 space-y-0 lg:col-start-1 lg:row-start-1">
+  <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-x-4 lg:gap-y-0">
+  <div className="order-1 space-y-3 lg:col-start-1 lg:row-start-1 lg:space-y-0">
           <RoomHeader
             room={room}
             isHost={isHost}
@@ -469,7 +469,7 @@ export default function RoomPage() {
           />
         </div>
 
-        <div className="order-2 space-y-3 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:px-2">
+  <div className="order-2 space-y-4 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:px-2 lg:space-y-3">
           <CalledNumbers
             numbers={room.called_numbers}
             action={

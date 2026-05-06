@@ -41,63 +41,111 @@ export default function CalledNumbers({ numbers, action }: CalledNumbersProps) {
   const [collapsed, setCollapsed] = useState(true);
 
   const recentNumbers = [...numbers].reverse();
-  const [currentNumber, ...previousNumbers] = recentNumbers;
+  const [currentNumber, previousNumber, ...historyNumbers] = recentNumbers;
+  const showHistory = !collapsed;
+  const hasHistoryNumbers = historyNumbers.length > 0;
 
   return (
     <Card className="bg-transparent shadow-none">
       <Collapsible open={!collapsed} onOpenChange={(open) => setCollapsed(!open)}>
-        <CardHeader className="flex flex-row items-center justify-between gap-2 px-3 pb-2 sm:px-6">
-        <CardTitle className="text-base font-semibold text-slate-900 sm:text-lg">
-          Called Numbers
-        </CardTitle>
-        <div className="flex items-center gap-2">
-          {action ? <div className="shrink-0">{action}</div> : null}
-          <CollapsibleTrigger asChild>
-            <Button variant="outline" size="sm" className="shrink-0">
-              {collapsed ? `Show previous (${previousNumbers.length})` : "Hide previous"}
-            </Button>
-          </CollapsibleTrigger>
-        </div>
-      </CardHeader>
-      <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6">
+        <CardHeader className="flex flex-col gap-3 px-3 pb-2 sm:px-6">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-center">
+            <CardTitle className="text-base font-semibold text-slate-900 sm:text-lg">
+              Called Numbers
+            </CardTitle>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:flex-nowrap items-center lg:gap-3">
+              {action ? (
+                <div className="flex w-full flex-wrap items-center justify-center gap-2 sm:w-auto sm:justify-start">
+                  {action}
+                </div>
+              ) : null}
+              <div className="flex w-full justify-center sm:w-auto sm:justify-start">
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-6 shrink-0 px-3 text-[11px] font-semibold sm:h-9 sm:text-xs"
+                  >
+                    {collapsed
+                      ? `Show History (${historyNumbers.length})`
+                      : "Hide History"}
+                  </Button>
+                </CollapsibleTrigger>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="px-3 pb-3 pt-3 sm:px-6 sm:pb-6">
           {recentNumbers.length ? (
-            <div className="grid w-full grid-cols-[3.5rem_1fr] items-start gap-4 sm:grid-cols-[4.5rem_1fr]">
-              {currentNumber !== undefined ? (() => {
-                const letter = getBingoLetter(currentNumber);
-                const asset = BALL_ASSETS[letter];
-                return (
-                  <div className="flex items-center gap-2 rounded-2xl px-1 py-1">
-                    <div className="relative h-12 w-12 sm:h-16 sm:w-16">
-                      <Image src={asset} alt={`${letter} ball`} fill className="object-contain" />
-                      <div className="absolute inset-0 flex items-center justify-center font-bold text-slate-900 top-2">
-                        <span className="text-sm sm:text-lg">{currentNumber}</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })() : (
-                <div className="h-12 w-12 sm:h-16 sm:w-16" />
-              )}
-
-              <CollapsibleContent>
-                {previousNumbers.length ? (
-                  <div className="flex flex-wrap items-center gap-2">
-                    {previousNumbers.map((num, index) => {
-                      const letter = getBingoLetter(num);
-                      return (
-                        <div key={`${num}-${index}`} className="relative h-8 w-8 sm:h-10 sm:w-10">
-                          <Image
-                            src={BALL_ASSETS[letter]}
-                            alt={`${letter} ball`}
-                            fill
-                            className="object-contain"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center font-bold text-slate-90 top-1">
-                            <span className="text-[10px] sm:text-xs">{num}</span>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-row items-center justify-center gap-6">
+                <div className="flex w-24 flex-col items-center gap-2 sm:w-28">
+                  <span className="text-xs font-semibold uppercase leading-none tracking-wide text-white">
+                    Current
+                  </span>
+                  {currentNumber !== undefined ? (() => {
+                    const letter = getBingoLetter(currentNumber);
+                    const asset = BALL_ASSETS[letter];
+                    return (
+                      <div className="flex items-center gap-2 rounded-2xl px-1 py-1">
+                        <div className="relative h-12 w-12 sm:h-16 sm:w-16">
+                          <Image src={asset} alt={`${letter} ball`} fill className="object-contain" />
+                          <div className="absolute inset-0 flex items-center justify-center font-bold text-slate-900 top-2">
+                            <span className="text-sm sm:text-lg">{currentNumber}</span>
                           </div>
                         </div>
-                      );
-                    })}
+                      </div>
+                    );
+                  })() : (
+                    <div className="h-12 w-12 sm:h-16 sm:w-16" />
+                  )}
+                </div>
+
+                <div className="flex w-24 flex-col items-center gap-4 sm:w-28">
+                  <span className="text-xs font-semibold uppercase leading-none tracking-wide text-white">
+                    Previous
+                  </span>
+                  {previousNumber !== undefined ? (() => {
+                    const letter = getBingoLetter(previousNumber);
+                    const asset = BALL_ASSETS[letter];
+                    return (
+                      <div className="relative h-12 w-12 sm:h-16 sm:w-16">
+                        <Image src={asset} alt={`${letter} ball`} fill className="object-contain" />
+                        <div className="absolute inset-0 flex items-center justify-center font-bold text-slate-900 top-2">
+                          <span className="text-sm sm:text-lg">{previousNumber}</span>
+                        </div>
+                      </div>
+                    );
+                  })() : (
+                    <div className="h-12 w-12 sm:h-16 sm:w-16" />
+                  )}
+                </div>
+              </div>
+
+              <CollapsibleContent>
+                {hasHistoryNumbers ? (
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      History
+                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {historyNumbers.map((num, index) => {
+                        const letter = getBingoLetter(num);
+                        return (
+                          <div key={`${num}-${index}`} className="relative h-8 w-8 sm:h-10 sm:w-10">
+                            <Image
+                              src={BALL_ASSETS[letter]}
+                              alt={`${letter} ball`}
+                              fill
+                              className="object-contain"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center font-bold text-slate-900 top-1">
+                              <span className="text-[10px] sm:text-xs">{num}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 ) : null}
               </CollapsibleContent>

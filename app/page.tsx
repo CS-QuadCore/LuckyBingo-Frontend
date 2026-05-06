@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 
 import HomeHero from "@/components/home/HomeHero";
@@ -136,9 +137,15 @@ export default function HomePage() {
         <span className="font-display font-black text-lg text-stone-900 tracking-tight">
           Bingo<span className="text-orange-500">.</span>
         </span>
-        <span className="text-xs text-stone-400 font-medium">
-          Real-time · Multiplayer
-        </span>
+        <div className="flex items-center gap-3 text-xs font-medium text-stone-500">
+          <Link
+            href="/how-to-play"
+            className="rounded-full border border-stone-200 bg-white/70 px-3 py-1 text-stone-600 shadow-sm transition hover:border-stone-300 hover:text-stone-800"
+          >
+            How to play
+          </Link>
+          <span className="hidden sm:inline">Real-time · Multiplayer</span>
+        </div>
       </nav>
 
       <div className="mx-auto max-w-2xl space-y-4">

@@ -61,7 +61,7 @@ export default function CalledNumbers({ numbers, action }: CalledNumbersProps) {
       </CardHeader>
       <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6">
           {recentNumbers.length ? (
-            <div className="flex w-full items-center gap-4 relative min-w-0">
+            <div className="grid w-full grid-cols-[3.5rem_1fr] items-start gap-4 sm:grid-cols-[4.5rem_1fr]">
               {currentNumber !== undefined ? (() => {
                 const letter = getBingoLetter(currentNumber);
                 const asset = BALL_ASSETS[letter];
@@ -73,39 +73,38 @@ export default function CalledNumbers({ numbers, action }: CalledNumbersProps) {
                         <span className="text-sm sm:text-lg">{currentNumber}</span>
                       </div>
                     </div>
-
                   </div>
                 );
-              })() : null}
-              <div className="flex-1 min-w-0">
-                <CollapsibleContent>
-                  {previousNumbers.length ? (
-                    <div className="flex items-center gap-2 overflow-x-auto max-w-full">
-                      {previousNumbers.map((num, index) => {
-                        const letter = getBingoLetter(num);
-                        return (
-                          <div key={`${num}-${index}`} className="relative inline-block h-8 w-8 sm:h-10 sm:w-10 mr-2 flex-shrink-0">
-                            <Image
-                              src={BALL_ASSETS[letter]}
-                              alt={`${letter} ball`}
-                              fill
-                              className="object-contain"
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center font-bold text-slate-90 top-1">
-                              <span className="text-[10px] sm:text-xs">{num}</span>
-                            </div>
+              })() : (
+                <div className="h-12 w-12 sm:h-16 sm:w-16" />
+              )}
+
+              <CollapsibleContent>
+                {previousNumbers.length ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {previousNumbers.map((num, index) => {
+                      const letter = getBingoLetter(num);
+                      return (
+                        <div key={`${num}-${index}`} className="relative h-8 w-8 sm:h-10 sm:w-10">
+                          <Image
+                            src={BALL_ASSETS[letter]}
+                            alt={`${letter} ball`}
+                            fill
+                            className="object-contain"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center font-bold text-slate-90 top-1">
+                            <span className="text-[10px] sm:text-xs">{num}</span>
                           </div>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-                </CollapsibleContent>
-              </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </CollapsibleContent>
             </div>
           ) : (
             <span className="text-sm text-muted-foreground">No numbers called yet.</span>
           )}
-          
         </CardContent>
       </Collapsible>
     </Card>

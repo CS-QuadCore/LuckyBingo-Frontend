@@ -1,11 +1,18 @@
+import { useMemo } from "react";
+import Image from "next/image";
 import type { BingoCell } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { WinPattern } from "@/lib/types";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import bingoCardAsset from "@/components/assets/bingo_card.svg";
+import markAsset from "@/components/assets/mark.svg";
+import greenMarkAsset from "@/components/assets/green_mark.svg";
 
 type BingoCardProps = {
   card: BingoCell[][];
   calledNumbers: number[];
   markedCells: string[];
+  winPattern: WinPattern;
   onCellClick: (row: number, col: number, value: BingoCell) => void;
 };
 
@@ -15,55 +22,212 @@ export default function BingoCard({
   card,
   calledNumbers,
   markedCells,
+  winPattern,
   onCellClick,
 }: BingoCardProps) {
+  const winningCells = useMemo(() => {
+    const isCellMarkedOrFree = (row: number, col: number) => {
+      const value = card[row]?.[col];
+      const key = `${row}-${col}`;
+      return value === "FREE" || markedCells.includes(key);
+    };
+
+    const horizontalLines = Array.from({ length: 5 }, (_, row) =>
+      Array.from({ length: 5 }, (_, col) => `${row}-${col}`)
+    );
+    const verticalLines = Array.from({ length: 5 }, (_, col) =>
+      Array.from({ length: 5 }, (_, row) => `${row}-${col}`)
+    );
+    const diagonalLines = [
+      Array.from({ length: 5 }, (_, index) => `${index}-${index}`),
+      Array.from({ length: 5 }, (_, index) => `${index}-${4 - index}`),
+    ];
+
+    const isLineComplete = (line: string[]) =>
+      line.every((key) => {
+        const [row, col] = key.split("-").map(Number);
+        return isCellMarkedOrFree(row, col);
+      });
+
+    const buildSetFromCoordinates = (coords: Array<[number, number]>) =>
+      new Set(coords.map(([row, col]) => `${row}-${col}`));
+
+    const toKeyList = (coords: Array<[number, number]>) => coords.map(([row, col]) => `${row}-${col}`);
+
+    const completed = new Set<string>();
+
+    if (winPattern === "DEFAULT" || winPattern === "ANY_LINE") {
+      const allLines = [...horizontalLines, ...verticalLines, ...diagonalLines];
+      allLines.forEach((line) => {
+        if (isLineComplete(line)) {
+          line.forEach((key) => completed.add(key));
+        }
+      });
+      return completed;
+    }
+
+    if (winPattern === "HORIZONTAL_ONLY") {
+      horizontalLines.forEach((line) => {
+        if (isLineComplete(line)) {
+          line.forEach((key) => completed.add(key));
+        }
+      });
+      return completed;
+    }
+
+    if (winPattern === "VERTICAL_ONLY") {
+      verticalLines.forEach((line) => {
+        if (isLineComplete(line)) {
+          line.forEach((key) => completed.add(key));
+        }
+      });
+      return completed;
+    }
+
+    if (winPattern === "DIAGONAL_ONLY") {
+      diagonalLines.forEach((line) => {
+        if (isLineComplete(line)) {
+          line.forEach((key) => completed.add(key));
+        }
+      });
+      return completed;
+    }
+
+    if (winPattern === "CROSS") {
+      const crossKeys = toKeyList([
+        [2, 0],
+        [2, 1],
+        [2, 2],
+        [2, 3],
+        [2, 4],
+        [0, 2],
+        [1, 2],
+        [3, 2],
+        [4, 2],
+      ]);
+      if (isLineComplete(crossKeys)) {
+        crossKeys.forEach((key) => completed.add(key));
+      }
+      return completed;
+    }
+
+    if (winPattern === "X_PATTERN") {
+      const xKeys = Array.from(
+        buildSetFromCoordinates([
+          [0, 0],
+          [1, 1],
+          [2, 2],
+          [3, 3],
+          [4, 4],
+          [0, 4],
+          [1, 3],
+          [3, 1],
+          [4, 0],
+        ])
+      );
+      if (isLineComplete(xKeys)) {
+        xKeys.forEach((key) => completed.add(key));
+      }
+      return completed;
+    }
+
+    if (winPattern === "FOUR_CORNERS") {
+      const corners = toKeyList([
+        [0, 0],
+        [0, 4],
+        [4, 0],
+        [4, 4],
+      ]);
+      if (isLineComplete(corners)) {
+        corners.forEach((key) => completed.add(key));
+      }
+      return completed;
+    }
+
+    if (winPattern === "FULL_BLACKOUT") {
+      const allCells = Array.from({ length: 5 }, (_, row) =>
+        Array.from({ length: 5 }, (_, col) => `${row}-${col}`)
+      ).flat();
+      if (isLineComplete(allCells)) {
+        allCells.forEach((key) => completed.add(key));
+      }
+      return completed;
+    }
+
+    if (winPattern === "PICTURE_FRAME") {
+      const frame = Array.from({ length: 5 }, (_, row) =>
+        Array.from({ length: 5 }, (_, col) => ({ row, col }))
+      )
+        .flat()
+        .filter(({ row, col }) => row === 0 || row === 4 || col === 0 || col === 4)
+        .map(({ row, col }) => `${row}-${col}`);
+      if (isLineComplete(frame)) {
+        frame.forEach((key) => completed.add(key));
+      }
+      return completed;
+    }
+
+    return completed;
+  }, [card, markedCells, winPattern]);
+
   return (
-    <Card className="rounded-2xl">
-      <CardHeader>
-        <CardTitle>Your Bingo Card</CardTitle>
-      </CardHeader>
-
-      <CardContent className="space-y-3">
-        <div className="grid grid-cols-5 gap-2">
-          {BINGO_HEADERS.map((letter) => (
-            <div
-              key={letter}
-              className="flex h-12 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground"
-            >
-              {letter}
+    <Card className="rounded-2xl border-none bg-transparent shadow-none">
+      <CardContent className="p-3 sm:p-6">
+        <div className="relative mx-auto w-full max-w-xl">
+          <Image
+            src={bingoCardAsset}
+            alt="Bingo card"
+            className="h-auto w-full"
+            priority
+          />
+          <div className="absolute inset-x-[14%] bottom-[12%] top-[17%] sm:inset-x-[16%] sm:bottom-[11%] sm:top-[17%] sm:left-21.5 left-13 right-14">
+            <div className="sr-only" aria-hidden>
+              {BINGO_HEADERS.join(" ")}
             </div>
-          ))}
-        </div>
+            <div className="grid h-full w-full grid-cols-5 grid-rows-5 gap-[1%]">
+              {card.map((row, rowIndex) =>
+                row.map((cell, colIndex) => {
+                  const key = `${rowIndex}-${colIndex}`;
+                  const isFree = cell === "FREE";
+                  const isMarked = markedCells.includes(key);
+                  const isCalled = !isFree && calledNumbers.includes(Number(cell));
+                  const isClickable = isCalled || isMarked;
+                  const isWinningCell = winningCells.has(key);
 
-        <div className="grid grid-cols-5 gap-2">
-          {card.map((row, rowIndex) =>
-            row.map((cell, colIndex) => {
-              const key = `${rowIndex}-${colIndex}`;
-              const isFree = cell === "FREE";
-              const isMarked = markedCells.includes(key);
-              const isCalled = !isFree && calledNumbers.includes(Number(cell));
-              const isClickable = isFree || isCalled || isMarked;
-
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => onCellClick(rowIndex, colIndex, cell)}
-                  disabled={!isClickable}
-                  className={cn(
-                    "flex aspect-square items-center justify-center rounded-xl border text-lg font-semibold transition",
-                    isMarked
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-muted text-foreground",
-                    isClickable && !isMarked && "hover:bg-accent",
-                    !isClickable && "cursor-not-allowed opacity-60"
-                  )}
-                >
-                  {cell}
-                </button>
-              );
-            })
-          )}
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => onCellClick(rowIndex, colIndex, cell)}
+                      disabled={!isClickable}
+                      className={cn(
+                        "relative flex aspect-square h-full w-full items-center justify-center rounded-[18%] p-0 text-center text-lg font-semibold leading-none text-slate-700 transition sm:text-4xl md:text-4xl lg:text-4xl",
+                        isClickable && !isMarked && "hover:scale-[1.02]",
+                        !isClickable && "cursor-not-allowed opacity-60"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "relative z-10",
+                          isMarked || isWinningCell ? "text-slate-900" : "text-slate-700"
+                        )}
+                      >
+                        {isFree ? "" : cell}
+                      </span>
+                      {!isFree && (isMarked || isWinningCell) && (
+                        <Image
+                          src={isMarked && isWinningCell ? greenMarkAsset : markAsset}
+                          alt={isMarked && isWinningCell ? "Bingo" : "Marked"}
+                          fill
+                          className="pointer-events-none object-contain opacity-80 scale-85"
+                        />
+                      )}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

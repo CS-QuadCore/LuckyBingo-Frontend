@@ -1,132 +1,297 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
-import { callNumber, claimBingo, getRoom, getRoomWebSocketUrl } from "@/lib/api";
-import type { BingoCell, RoomSnapshot } from "@/lib/types";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import { useParams, useRouter } from "next/navigation";
+
+import WinnerModal from "@/components/modals/WinnerModal";
+import SessionEndedModal from "@/components/modals/SessionEndedModal";
+import InvalidBingoModal from "@/components/modals/InvalidBingoModal";
+import NoMoreNumbersModal from "@/components/modals/NoMoreNumbersModal";
+import LeaveSessionModal from "@/components/modals/LeaveSessionModal";
+import EndSessionModal from "@/components/modals/EndSessionModal";
+import RestartSessionModal from "@/components/modals/RestartSessionModal";
+import WelcomeModal from "@/components/modals/WelcomeModal";
+
+import {
+  callNumber,
+  claimBingo,
+  getRoom,
+  getRoomWebSocketUrl,
+  endSession,
+  restartSession,
+  changeCard,
+  leaveRoom,
+  sendQuickChat,
+  updateWinPattern,
+} from "@/lib/api";
+
+import type { BingoCell, RoomSnapshot, WinPattern } from "@/lib/types";
+
 import RoomHeader from "@/components/room/RoomHeader";
 import BingoCard from "@/components/room/BingoCard";
 import PlayerList from "@/components/room/PlayerList";
 import CalledNumbers from "@/components/room/CalledNumbers";
+import { Button } from "@/components/ui/button";
+import backgroundScene from "@/components/assets/background.svg";
 
 export default function RoomPage() {
   const params = useParams();
+  const router = useRouter();
+
   const roomCode = String(params.roomCode || "").toUpperCase();
+
+  const [showWinnerModal, setShowWinnerModal] = useState(false);
+  const [winnerName, setWinnerName] = useState("");
+  const [showInvalidBingoModal, setShowInvalidBingoModal] = useState(false);
+  const [showNoMoreNumbersModal, setShowNoMoreNumbersModal] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showEndSessionModal, setShowEndSessionModal] = useState(false);
+  const [showSessionEndedModal, setShowSessionEndedModal] = useState(false);
+  const [showRestartSessionModal, setShowRestartSessionModal] = useState(false);
+  const [showSessionRestartedToast, setShowSessionRestartedToast] = useState(false);
+  const [showCardsRefreshedToast, setShowCardsRefreshedToast] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+  // Host failover toast
+  const [showHostPromotionToast, setShowHostPromotionToast] = useState(false);
 
   const [room, setRoom] = useState<RoomSnapshot | null>(null);
   const [card, setCard] = useState<BingoCell[][]>([]);
   const [playerId, setPlayerId] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [playerName, setPlayerName] = useState("");
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [markedCells, setMarkedCells] = useState<string[]>([]);
+  const [activeQuickChats, setActiveQuickChats] = useState<Record<string, string>>({});
+  const quickChatTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const winnerAnnouncedIdRef = useRef<string | null>(null);
+
+  const markedStorageKey = useMemo(() => {
+    if (!roomCode || !playerId) return "";
+    return `bingo_marked_${roomCode}_${playerId}`;
+  }, [roomCode, playerId]);
+
+  // Track previous host to detect failover
+  const prevHostIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!roomCode) return;
+    const pid = localStorage.getItem("player_id") || "";
+    const pname = localStorage.getItem("player_name") || "";
+    const storedCard = localStorage.getItem("player_card");
 
-    async function init() {
-      const storedPlayerId = localStorage.getItem("player_id") || "";
-      const storedCard = localStorage.getItem("player_card");
+    setPlayerId(pid);
+    setPlayerName(pname);
 
-      setPlayerId(storedPlayerId);
-
-      if (storedCard) {
-        try {
-          const parsedCard = JSON.parse(storedCard) as BingoCell[][];
-          setCard(parsedCard);
-
-          const hasFreeCenter = parsedCard?.[2]?.[2] === "FREE";
-          setMarkedCells(hasFreeCenter ? ["2-2"] : []);
-        } catch {
-          setCard([]);
-          setMarkedCells([]);
-        }
-      }
-
+    if (storedCard) {
       try {
-        const snapshot = await getRoom(roomCode);
-        setRoom(snapshot);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load room");
-      } finally {
-        setLoading(false);
-      }
+        setCard(JSON.parse(storedCard));
+      } catch {}
     }
 
-    init();
+    getRoom(roomCode)
+      .then((r) => {
+        setRoom(r);
+        prevHostIdRef.current = r.host_id;
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Failed to load room");
+      });
   }, [roomCode]);
 
   useEffect(() => {
-    if (!roomCode) return;
+    if (!room || !roomCode || !playerId) return;
+    const welcomeKey = `bingo_welcome_${roomCode}_${playerId}`;
+    if (localStorage.getItem(welcomeKey)) return;
+    localStorage.setItem(welcomeKey, "1");
+    setShowWelcomeModal(true);
+  }, [room, roomCode, playerId]);
 
-    const ws = new WebSocket(getRoomWebSocketUrl(roomCode));
+  useEffect(() => {
+    if (!markedStorageKey) return;
+    const storedMarks = localStorage.getItem(markedStorageKey);
+    if (!storedMarks) return;
+    try {
+      const parsed = JSON.parse(storedMarks);
+      if (Array.isArray(parsed)) {
+        setMarkedCells(parsed);
+      }
+    } catch {}
+  }, [markedStorageKey]);
+
+  useEffect(() => {
+    if (!markedStorageKey) return;
+    localStorage.setItem(markedStorageKey, JSON.stringify(markedCells));
+  }, [markedCells, markedStorageKey]);
+
+  /* WEBSOCKET */
+  useEffect(() => {
+    if (!roomCode || !playerId || !playerName.trim()) return;
+
+    const ws = new WebSocket(getRoomWebSocketUrl(roomCode, playerId, playerName));
+
+    ws.onopen = () => {
+      setError("");
+    };
 
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+
+        if (data.cards && typeof data.cards === "object") {
+          const nextCard = data.cards[playerId];
+          if (nextCard) {
+            setCard(nextCard);
+            localStorage.setItem("player_card", JSON.stringify(nextCard));
+            setMarkedCells([]);
+            if (markedStorageKey) {
+              localStorage.removeItem(markedStorageKey);
+            }
+          }
+        }
+
+        if (data.type === "card_changed" && data.player_id === playerId && data.card) {
+          setCard(data.card);
+          localStorage.setItem("player_card", JSON.stringify(data.card));
+          setMarkedCells([]);
+          if (markedStorageKey) {
+            localStorage.removeItem(markedStorageKey);
+          }
+        }
+
         if (data.room) {
-          setRoom(data.room);
+          const newRoom: RoomSnapshot = data.room;
+
+          setRoom((prev) => {
+            // Detect host failover: host changed AND current player is new host
+            if (
+              prev &&
+              prev.host_id !== newRoom.host_id &&
+              newRoom.host_id === playerId
+            ) {
+              setShowHostPromotionToast(true);
+              setTimeout(() => setShowHostPromotionToast(false), 5000);
+            }
+
+            if (
+              prev &&
+              prev.status === "finished" &&
+              newRoom.status !== "finished"
+            ) {
+              setShowWinnerModal(false);
+              setShowSessionEndedModal(false);
+              setShowInvalidBingoModal(false);
+              setWinnerName("");
+              winnerAnnouncedIdRef.current = null;
+              setMarkedCells([]);
+              if (markedStorageKey) {
+                localStorage.removeItem(markedStorageKey);
+              }
+              setShowSessionRestartedToast(true);
+              setTimeout(() => setShowSessionRestartedToast(false), 4000);
+            }
+            prevHostIdRef.current = newRoom.host_id;
+            return newRoom;
+          });
+        }
+
+        if (data.type === "bingo_won") {
+          setWinnerName(data.winner_name);
+          winnerAnnouncedIdRef.current = data.winner_id ?? null;
+          setShowWinnerModal(true);
+        }
+
+        if (data.type === "session_ended") {
+          setShowSessionEndedModal(true);
+        }
+
+        if (data.type === "card_changed" && data.player_id === playerId) {
+          setShowCardsRefreshedToast(true);
+          setTimeout(() => setShowCardsRefreshedToast(false), 3000);
+        }
+
+        if (data.type === "quick_chat" && data.player_id && data.message) {
+          const chatPlayerId = String(data.player_id);
+          const chatMessage = String(data.message);
+
+          setActiveQuickChats((prev) => ({
+            ...prev,
+            [chatPlayerId]: chatMessage,
+          }));
+
+          const existingTimeout = quickChatTimeoutsRef.current[chatPlayerId];
+          if (existingTimeout) {
+            clearTimeout(existingTimeout);
+          }
+
+          quickChatTimeoutsRef.current[chatPlayerId] = setTimeout(() => {
+            setActiveQuickChats((prev) => {
+              const next = { ...prev };
+              delete next[chatPlayerId];
+              return next;
+            });
+            delete quickChatTimeoutsRef.current[chatPlayerId];
+          }, 4000);
         }
       } catch (err) {
         console.error("WebSocket parse error:", err);
       }
     };
 
-    ws.onerror = (err) => {
-      console.error("WebSocket error:", err);
+    ws.onerror = () => {
+      setError("Realtime connection issue. Retrying automatically...");
     };
 
-    return () => ws.close();
-  }, [roomCode]);
+    ws.onclose = (event) => {
+      if (!event.wasClean) {
+        setError("Realtime connection lost. Trying to reconnect...");
+      }
+    };
+
+    return () => {
+      ws.close();
+      Object.values(quickChatTimeoutsRef.current).forEach((timerId) => clearTimeout(timerId));
+      quickChatTimeoutsRef.current = {};
+    };
+  }, [roomCode, playerId, playerName, markedStorageKey]);
 
   const isHost = useMemo(() => {
-    if (!room || !playerId) return false;
-    return room.host_id === playerId;
+    return room?.host_id === playerId;
   }, [room, playerId]);
 
-  function handleCellClick(row: number, col: number, value: BingoCell) {
-    if (!room) return;
+  useEffect(() => {
+    if (!room?.winner_id) return;
+    if (winnerAnnouncedIdRef.current === room.winner_id) return;
 
-    const key = `${row}-${col}`;
+    const winner = room.players.find((p) => p.player_id === room.winner_id);
+    setWinnerName(winner?.player_name || "A player");
+    setShowWinnerModal(true);
+    winnerAnnouncedIdRef.current = room.winner_id;
+  }, [room]);
 
-    if (value === "FREE") return;
-
-    const numericValue = Number(value);
-    if (!room.called_numbers.includes(numericValue)) return;
-
-    setMarkedCells((prev) =>
-      prev.includes(key)
-        ? prev.filter((cellKey) => cellKey !== key)
-        : [...prev, key]
-    );
-  }
-
+  /* ACTIONS */
   async function handleCallNumber() {
-    if (!playerId) return;
-
-    setActionLoading(true);
     setError("");
-
     try {
-      const data = await callNumber(roomCode, playerId);
-      setRoom(data.room);
+      const res = await callNumber(roomCode, playerId);
+      setRoom(res.room);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to call number");
-    } finally {
-      setActionLoading(false);
+      const message = err instanceof Error ? err.message : "Failed to call number";
+      if (message === "No more numbers available") {
+        setShowNoMoreNumbersModal(true);
+        return;
+      }
+      setError(message);
     }
   }
 
   async function handleClaimBingo() {
-    if (!playerId) return;
-
-    setActionLoading(true);
+    if (actionLoading) return;
     setError("");
-
+    setActionLoading(true);
     try {
-      const data = await claimBingo(roomCode, playerId);
-      setRoom(data.room);
-      alert(data.is_valid ? "Bingo claim is valid!" : "Invalid bingo claim.");
+      const res = await claimBingo(roomCode, playerId);
+      if (!res.is_valid) setShowInvalidBingoModal(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to claim bingo");
     } finally {
@@ -134,52 +299,290 @@ export default function RoomPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-background p-6">
-        <p>Loading room...</p>
-      </main>
-    );
+  async function handleEndSession() {
+    if (actionLoading) return;
+    setError("");
+    setActionLoading(true);
+    try {
+      await endSession(roomCode, playerId);
+      setShowEndSessionModal(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to end session");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleRestartSession() {
+    if (actionLoading) return;
+    setError("");
+    setActionLoading(true);
+    try {
+      const res = await restartSession(roomCode, playerId);
+      setRoom(res.room);
+      const nextCard = res.cards?.[playerId];
+      if (nextCard) {
+        setCard(nextCard);
+        localStorage.setItem("player_card", JSON.stringify(nextCard));
+        setMarkedCells([]);
+        if (markedStorageKey) {
+          localStorage.removeItem(markedStorageKey);
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to restart session");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleChangeCard() {
+    if (actionLoading) return;
+    setError("");
+    setActionLoading(true);
+    try {
+      const res = await changeCard(roomCode, playerId);
+      setRoom(res.room);
+      setCard(res.card);
+      localStorage.setItem("player_card", JSON.stringify(res.card));
+      setMarkedCells([]);
+      if (markedStorageKey) {
+        localStorage.removeItem(markedStorageKey);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to change card");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleWinPatternChange(pattern: WinPattern) {
+    if (!isHost) return;
+    setError("");
+    try {
+      const res = await updateWinPattern(roomCode, playerId, pattern);
+      setRoom(res.room);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update win pattern");
+    }
+  }
+
+  async function handleLeaveConfirmed() {
+    setError("");
+    try {
+      await leaveRoom(roomCode, playerId);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to leave room";
+      if (message !== "Room not found") {
+        setError(message);
+        return;
+      }
+    }
+    if (markedStorageKey) {
+      localStorage.removeItem(markedStorageKey);
+    }
+    router.push("/");
+  }
+
+  async function handleSendQuickChat(message: string) {
+    if (!roomCode || !playerId) return;
+    try {
+      await sendQuickChat(roomCode, playerId, message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send quick chat");
+    }
   }
 
   if (!room) {
     return (
-      <main className="min-h-screen bg-background p-6">
-        <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error || "Room not found"}
+      <main className="p-6 space-y-4">
+        {error ? (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        ) : (
+          <p>Loading...</p>
+        )}
+        <div>
+          <button
+            className="rounded-md border px-3 py-2 text-sm"
+            onClick={() => router.push("/")}
+          >
+            Back To Home
+          </button>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-background px-6 py-8">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <RoomHeader
-          room={room}
-          isHost={isHost}
-          actionLoading={actionLoading}
-          onCallNumber={handleCallNumber}
-          onClaimBingo={handleClaimBingo}
-        />
+  <main className="relative min-h-screen overflow-hidden bg-sky-100 px-4 py-6 sm:px-6">
+      <Image
+        src={backgroundScene}
+        alt="Bingo background"
+        fill
+        priority
+        className="object-cover"
+      />
+  <div className="relative z-10 flex w-full flex-col gap-6">
+      {error ? (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      ) : null}
 
-        <CalledNumbers numbers={room.called_numbers} />
+      {/* Host promotion toast */}
+      {showHostPromotionToast && (
+        <div className="fixed top-4 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-primary/30 bg-primary/10 px-5 py-3 text-sm font-medium text-primary shadow-lg">
+          👑 You are now the host of this room.
+        </div>
+      )}
 
-        {error ? (
-          <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {error}
-          </div>
-        ) : null}
+      {showSessionRestartedToast && (
+        <div className="fixed top-16 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-emerald-300/40 bg-emerald-100/70 px-5 py-3 text-sm font-medium text-emerald-900 shadow-lg">
+          🔄 New round started. Good luck!
+        </div>
+      )}
 
-        <div className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
+      {showCardsRefreshedToast && (
+        <div className="fixed top-28 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-sky-300/50 bg-sky-100/70 px-5 py-3 text-sm font-medium text-sky-900 shadow-lg">
+          🃏 Your card has been updated.
+        </div>
+      )}
+
+  <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-x-4 lg:gap-y-0">
+  <div className="order-1 space-y-3 lg:col-start-1 lg:row-start-1 lg:space-y-0">
+          <RoomHeader
+            room={room}
+            isHost={isHost}
+            actionLoading={actionLoading}
+            showCallNumber={false}
+            onCallNumber={handleCallNumber}
+            onLeave={() => setShowLeaveModal(true)}
+            onEndSession={async () => setShowEndSessionModal(true)}
+            onRestartSession={async () => {
+              if (!isHost) return;
+              setShowRestartSessionModal(true);
+            }}
+            onRefreshCards={handleChangeCard}
+            onWinPatternChange={handleWinPatternChange}
+          />
+        </div>
+
+  <div className="order-2 space-y-4 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:px-2 lg:space-y-3">
+          <CalledNumbers
+            numbers={room.called_numbers}
+            action={
+              <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+                {isHost ? (
+                  <Button
+                    onClick={handleCallNumber}
+                    disabled={actionLoading || room.status === "finished"}
+                    className="h-8 sm:h-9 rounded-lg bg-emerald-500 px-3 text-[11px] sm:text-xs font-semibold text-white shadow-md hover:bg-emerald-600"
+                  >
+                    Call Number
+                  </Button>
+                ) : null}
+                <Button
+                  onClick={handleClaimBingo}
+                  disabled={actionLoading || room.status === "finished"}
+                  className="h-8 sm:h-9 rounded-lg bg-yellow-400 px-3 text-[11px] sm:text-xs font-semibold text-yellow-900 hover:bg-yellow-500"
+                >
+                  ⭐ Claim Bingo
+                </Button>
+              </div>
+            }
+          />
           <BingoCard
             card={card}
             calledNumbers={room.called_numbers}
             markedCells={markedCells}
-            onCellClick={handleCellClick}
+            winPattern={room.win_pattern}
+            onCellClick={(r, c, val) => {
+              const key = `${r}-${c}`;
+              if (val !== "FREE" && !room.called_numbers.includes(Number(val))) return;
+              setMarkedCells((prev) =>
+                prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key]
+              );
+            }}
           />
-          <PlayerList players={room.players} />
         </div>
+
+  <div className="order-3 lg:col-start-1 lg:row-start-2">
+          <PlayerList
+            players={room.players}
+            currentPlayerId={playerId}
+            activeQuickChats={activeQuickChats}
+            onSendQuickChat={handleSendQuickChat}
+          />
+        </div>
+      </div>
+
+      <WinnerModal
+        open={showWinnerModal}
+        winnerName={winnerName}
+        canPlayAgain={isHost}
+        playAgainLoading={actionLoading}
+        onLeave={() => {
+          setShowWinnerModal(false);
+          setShowLeaveModal(true);
+        }}
+        onPlayAgain={async () => {
+          if (!isHost) return;
+          setShowWinnerModal(false);
+          setShowRestartSessionModal(true);
+        }}
+        onClose={() => setShowWinnerModal(false)}
+      />
+
+      <SessionEndedModal
+        open={showSessionEndedModal}
+        onGoHome={() => {
+          setShowSessionEndedModal(false);
+          router.push("/");
+        }}
+        onCancel={() => setShowSessionEndedModal(false)}
+      />
+
+      <EndSessionModal
+        open={showEndSessionModal}
+        loading={actionLoading}
+        onConfirm={handleEndSession}
+        onCancel={() => setShowEndSessionModal(false)}
+      />
+
+      <RestartSessionModal
+        open={showRestartSessionModal}
+        loading={actionLoading}
+        onConfirm={async () => {
+          await handleRestartSession();
+          setShowRestartSessionModal(false);
+        }}
+        onCancel={() => setShowRestartSessionModal(false)}
+      />
+
+      <InvalidBingoModal
+        open={showInvalidBingoModal}
+        onClose={() => setShowInvalidBingoModal(false)}
+      />
+
+      <NoMoreNumbersModal
+        open={showNoMoreNumbersModal}
+        onClose={() => setShowNoMoreNumbersModal(false)}
+      />
+
+      <WelcomeModal
+        open={showWelcomeModal}
+        playerName={playerName}
+        roomCode={room.room_code}
+        onClose={() => setShowWelcomeModal(false)}
+      />
+
+      <LeaveSessionModal
+        open={showLeaveModal}
+        onConfirm={handleLeaveConfirmed}
+        onCancel={() => setShowLeaveModal(false)}
+      />
       </div>
     </main>
   );

@@ -1,15 +1,31 @@
 export type BingoCell = number | string;
 
+export type WinPattern =
+  | "DEFAULT"
+  | "ANY_LINE"
+  | "HORIZONTAL_ONLY"
+  | "VERTICAL_ONLY"
+  | "DIAGONAL_ONLY"
+  | "CROSS"
+  | "X_PATTERN"
+  | "FOUR_CORNERS"
+  | "FULL_BLACKOUT"
+  | "PICTURE_FRAME";
+
 export type PlayerSummary = {
   player_id: string;
   player_name: string;
   is_host: boolean;
+  connected: boolean;
 };
 
 export type RoomSnapshot = {
   room_code: string;
   host_id: string;
+  visibility: "public" | "private";
+  win_pattern: WinPattern;
   status: "waiting" | "in_progress" | "finished";
+  ended_by_host: boolean;
   players: PlayerSummary[];
   called_numbers: number[];
   current_number: number | null;
@@ -18,6 +34,8 @@ export type RoomSnapshot = {
 
 export type CreateRoomRequest = {
   host_name: string;
+  host_id: string;
+  visibility: "public" | "private";
 };
 
 export type CreateRoomResponse = {
@@ -29,11 +47,20 @@ export type CreateRoomResponse = {
 
 export type JoinRoomRequest = {
   room_code: string;
-  player_name: string;
+  player_id: string;
+  name: string;
 };
 
 export type JoinRoomResponse = {
   player_id: string;
   room_code: string;
   card: BingoCell[][];
+};
+
+export type PublicRoomSummary = {
+  room_code: string;
+  host_id: string;
+  status: "waiting" | "in_progress";
+  total_players: number;
+  connected_players: number;
 };

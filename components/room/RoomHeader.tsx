@@ -145,7 +145,10 @@ export default function RoomHeader({
                   onValueChange={(value) =>
                     onWinPatternChange(value as WinPattern)
                   }
-                  disabled={actionLoading || room.status === "finished"}
+                  disabled={
+                    actionLoading || room.status === "finished" ||
+                    (room.called_numbers && room.called_numbers.length > 0)
+                  }
                 >
                   <SelectTrigger className="w-full sm:w-64 rounded-lg bg-white shadow-sm text-[11px] sm:text-xs">
                     <SelectValue placeholder="Select pattern" />

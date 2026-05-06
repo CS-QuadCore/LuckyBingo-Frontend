@@ -34,14 +34,14 @@ export default function PlayerBanner({
           <button
             onClick={onReEnter}
             disabled={reEnterLoading}
-            className="flex-1 sm:flex-none rounded-xl border border-emerald-300 bg-emerald-100/80 px-4 py-2 text-xs font-semibold text-emerald-900 hover:bg-emerald-200/80 active:scale-95 transition-all disabled:opacity-50"
+            className="flex-1 sm:flex-none rounded-xl border border-emerald-300 bg-emerald-100/80 px-3 py-1.5 text-[10px] font-semibold text-emerald-900 transition-all hover:bg-emerald-200/80 active:scale-95 disabled:opacity-50 sm:px-4 sm:py-2 sm:text-xs"
           >
             {reEnterLoading ? "Re-entering…" : "↩ Re-enter Last Room"}
           </button>
         )}
         <button
           onClick={onReset}
-          className="flex-1 sm:flex-none rounded-xl border border-white/70 bg-white/80 px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:border-white active:scale-95 transition-all"
+          className="flex-1 sm:flex-none rounded-xl border border-white/70 bg-white/80 px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-all hover:text-slate-900 hover:border-white active:scale-95 sm:px-4 sm:py-2 sm:text-xs"
         >
           Change Name
         </button>

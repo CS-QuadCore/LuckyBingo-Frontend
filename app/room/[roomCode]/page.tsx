@@ -11,6 +11,7 @@ import NoMoreNumbersModal from "@/components/modals/NoMoreNumbersModal";
 import LeaveSessionModal from "@/components/modals/LeaveSessionModal";
 import EndSessionModal from "@/components/modals/EndSessionModal";
 import RestartSessionModal from "@/components/modals/RestartSessionModal";
+import WelcomeModal from "@/components/modals/WelcomeModal";
 
 import {
   callNumber,
@@ -50,6 +51,7 @@ export default function RoomPage() {
   const [showRestartSessionModal, setShowRestartSessionModal] = useState(false);
   const [showSessionRestartedToast, setShowSessionRestartedToast] = useState(false);
   const [showCardsRefreshedToast, setShowCardsRefreshedToast] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   // Host failover toast
   const [showHostPromotionToast, setShowHostPromotionToast] = useState(false);
@@ -96,6 +98,14 @@ export default function RoomPage() {
         setError(err instanceof Error ? err.message : "Failed to load room");
       });
   }, [roomCode]);
+
+  useEffect(() => {
+    if (!room || !roomCode || !playerId) return;
+    const welcomeKey = `bingo_welcome_${roomCode}_${playerId}`;
+    if (localStorage.getItem(welcomeKey)) return;
+    localStorage.setItem(welcomeKey, "1");
+    setShowWelcomeModal(true);
+  }, [room, roomCode, playerId]);
 
   useEffect(() => {
     if (!markedStorageKey) return;
@@ -559,6 +569,13 @@ export default function RoomPage() {
       <NoMoreNumbersModal
         open={showNoMoreNumbersModal}
         onClose={() => setShowNoMoreNumbersModal(false)}
+      />
+
+      <WelcomeModal
+        open={showWelcomeModal}
+        playerName={playerName}
+        roomCode={room.room_code}
+        onClose={() => setShowWelcomeModal(false)}
       />
 
       <LeaveSessionModal

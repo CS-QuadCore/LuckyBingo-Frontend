@@ -450,8 +450,8 @@ export default function RoomPage() {
         </div>
       )}
 
-  <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-x-4 lg:gap-y-0">
-  <div className="order-1 space-y-3 lg:col-start-1 lg:row-start-1 lg:space-y-0">
+  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-4">
+        <div className="order-1 lg:w-[320px] lg:flex lg:flex-col lg:gap-0">
           <RoomHeader
             room={room}
             isHost={isHost}
@@ -467,9 +467,17 @@ export default function RoomPage() {
             onRefreshCards={handleChangeCard}
             onWinPatternChange={handleWinPatternChange}
           />
+          <div className="hidden lg:block mt-5">
+            <PlayerList
+              players={room.players}
+              currentPlayerId={playerId}
+              activeQuickChats={activeQuickChats}
+              onSendQuickChat={handleSendQuickChat}
+            />
+          </div>
         </div>
 
-  <div className="order-2 space-y-4 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:px-2 lg:space-y-3">
+        <div className="order-2 space-y-4 lg:flex-1 lg:px-2 lg:space-y-3">
           <CalledNumbers
             numbers={room.called_numbers}
             action={
@@ -508,7 +516,7 @@ export default function RoomPage() {
           />
         </div>
 
-  <div className="order-3 lg:col-start-1 lg:row-start-2">
+        <div className="order-3 lg:hidden">
           <PlayerList
             players={room.players}
             currentPlayerId={playerId}

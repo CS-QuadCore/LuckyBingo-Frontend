@@ -182,13 +182,12 @@ export default function RoomHeader({
               ) : null}
 
               {/* HOST SECONDARY */}
-              {isHost && (
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {isHost ? (
+                <div className="grid grid-cols-2 gap-2">
                   <Button
                     onClick={onRestartSession}
                     disabled={actionLoading || room.status !== "finished"}
-                    className="h-8 sm:h-10 rounded-lg bg-yellow-400 text-yellow-900 text-xs sm:text-sm hover:bg-yellow-500"
+                    className="h-8 sm:h-10 rounded-lg bg-green-500 text-slate-900 text-xs sm:text-sm hover:bg-yellow-500"
                   >
                     Play Again
                   </Button>
@@ -222,6 +221,29 @@ export default function RoomHeader({
                     >
                       Leave Room
                     </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={onRefreshCards}
+                    disabled={
+                      actionLoading ||
+                      room.status !== "waiting" ||
+                      room.called_numbers.length > 0
+                    }
+                    className="h-8 sm:h-10 rounded-lg text-xs sm:text-sm"
+                  >
+                    Change Card
+                  </Button>
+
+                  <Button
+                    variant="destructive"
+                    onClick={onLeave}
+                    className="w-full h-8 sm:h-10 rounded-lg text-xs sm:text-sm"
+                  >
+                    Leave Room
+                  </Button>
                 </div>
               )}
             </div>

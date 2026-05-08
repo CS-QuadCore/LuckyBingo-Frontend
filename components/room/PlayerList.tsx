@@ -64,9 +64,9 @@ export default function PlayerList({
                     {player.is_host ? "Host" : "Player"} · {player.connected ? "Connected" : "Disconnected"}
                   </div>
                   {quickChat ? (
-                    <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
+                    <div className="inline-flex items-center gap-2 rounded-xl border border-white/70 bg-white/80 px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm max-w-[70%]">
                       <span className="text-slate-500">💬</span>
-                      <span className="truncate">{quickChat}</span>
+                      <span className="whitespace-normal break-words break-all">{quickChat}</span>
                     </div>
                   ) : null}
                 </div>
